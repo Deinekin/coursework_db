@@ -1,6 +1,4 @@
-import psycopg2
-
-from src.config import config
+from src.db_manager import DBManager
 from src.get_api_hh import GetHhAPI
 
 
@@ -23,9 +21,10 @@ class AddDataToDB:
             "1942330",
         ]
         result: list = []
+        employer_info = GetHhAPI()
         for element in id_of_companies_list:
             list_of_all_vacancies.append(
-                GetHhAPI.set_data_to_list(GetHhAPI.get_employer_info(element))
+                GetHhAPI.set_data_to_list(employer_info.get_employer_info(element))
             )
 
         for element in list_of_all_vacancies:
@@ -36,28 +35,26 @@ class AddDataToDB:
     @staticmethod
     def set_data_to_db(table_name: str) -> None:
         """Записывает данные в базу данных"""
-        params: dict = config()
-        conn = psycopg2.connect(dbname="coursework_skypro_db", **params)
-        cur = conn.cursor()
-        for element in AddDataToDB.add_all_data_to_list():
-            cur.execute(
-                f"""
-            INSERT INTO {table_name} (employee_name, vacancy_name, salary_from, salary_to, area)
-            VALUES (%s, %s, %s, %s, %s)
-            """,
-                (
-                    element["employee_name"],
-                    element["vacancy_name"],
-                    element["salary_from"],
-                    element["salary_to"],
-                    element["area"],
-                ),
-            )
+        manager = DBManager()
+        manager.connect_db("coursework_skypro_db")
 
-        conn.commit()
-
+        with manager.get_conn.cursor() as cur:
+            for element in AddDataToDB.add_all_data_to_list():
+                cur.execute(
+                    f"""
+                INSERT INTO {table_name} (employee_name, vacancy_name, salary_from, salary_to, area)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                    (
+                        element["employee_name"],
+                        element["vacancy_name"],
+                        element["salary_from"],
+                        element["salary_to"],
+                        element["area"],
+                    ),
+                )
         cur.close()
-        conn.close()
+        manager.close_connect()
 
 
 # AddDataToDB.set_data_to_db("employers")

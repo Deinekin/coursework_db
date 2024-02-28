@@ -5,14 +5,16 @@ import requests
 
 class GetHhAPI:
 
-    @staticmethod
-    def get_employer_info(employer_id: str) -> list:
+    def __init__(self):
+        """Конструктор класса GetHhApi"""
+        self.__base_url = "https://api.hh.ru/vacancies"
+
+    def get_employer_info(self, employer_id: str) -> list:
         """Получает информацию о работодателе по его id. Учитываются вакансии, где указан
         верхний или нижний порог зарплаты"""
         data = []
-        url = "https://api.hh.ru/vacancies"
         params = {"employer_id": employer_id, "per_page": 100, "only_with_salary": True}
-        response = requests.get(url=url, params=params)
+        response = requests.get(url=self.__base_url, params=params)
         if response.status_code == 200:
             data = response.json()["items"]
 
